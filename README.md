@@ -4,7 +4,6 @@
 
 ### Autonomous Revenue Recovery Engine
 
-**Razorpay AI Buildathon 2026 · Track 03 — AI Revenue Recovery**
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
 [![Gemini](https://img.shields.io/badge/Gemini-3.6%20Flash-blue?logo=google)](https://ai.google.dev/)
@@ -345,8 +344,8 @@ npm run scheduler
 ### 5. Load Demo Data
 ```bash
 npx tsx scripts/simulate.ts
-# Fires 120 realistic Razorpay webhooks
-# Expected: ~12-13% recovery rate, matching real-world B2B benchmarks
+
+
 ```
 
 ---
@@ -431,10 +430,4 @@ vasooli/
 
 ---
 
-<div align="center">
 
-**Built for Razorpay AI Buildathon 2026 — Track 03: AI Revenue Recovery**
-
-*By Sujal Deshmukh*
-
-</div>
