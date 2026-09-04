@@ -1,0 +1,141 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Vasooli — Prisma Schema
+// PostgreSQL via Prisma ORM
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enumerations
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum EventType {
+  SUBSCRIPTION_FAILED
+  CHECKOUT_ABANDONED
+  B2B_INVOICE_OVERDUE
+}
+
+enum EventStatus {
+  DETECTED
+  IN_RECOVERY
+  PTP_ACTIVE
+  RECOVERED
+  ESCALATED_HUMAN
+  ABANDONED
+}
+
+enum PTPStatus {
+  PENDING
+  HONORED
+  BREACHED
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Central record for every revenue-at-risk signal ingested by Vasooli.
+/// Immutable after creation (status updates are the only allowed mutations).
+model RevenueEvent {
+  id              String    @id @default(uuid())
+  merchantId      String
+  eventType       EventType
+  amountAtRisk    Float
+  currency        String    @default("INR")
+  customerName    String
+  customerContact String
+
+  /// NPCI / card network decline code (e.g. "U16", "RB", "54", "43")
+  declineCode String?
+
+  /// Checkout funnel step at which drop-off occurred (e.g. "step_otp_timeout")
+  funnelStep String?
+
+  /// Razorpay Risk Score [0–100]. If > 80, all automation is frozen.
+  riskScore Float?
+
+  /// ISO due date for B2B invoice events
+  invoiceDueDate DateTime?
+
+  /// If true, all automated nudges are hard-frozen by the policy engine
+  isDisputed Boolean @default(false)
+
+  status    EventStatus @default(DETECTED)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  auditLogs AuditLog[]
+  promises  PromiseToPay[]
+
+  @@index([merchantId])
+  @@index([status])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+/// Immutable append-only audit trail for every decision Vasooli makes.
+/// Written before any action is dispatched. Never deleted, never updated.
+model AuditLog {
+  id        String       @id @default(uuid())
+  eventId   String
+  event     RevenueEvent @relation(fields: [eventId], references: [id])
+  timestamp DateTime     @default(now())
+
+  /// Stage in the Vasooli pipeline: DIAGNOSIS | POLICY_EVALUATION | ACTION_DISPATCH | RECOVERY_OUTCOME
+  stage String
+
+  /// Human-readable root-cause or policy decision explanation
+  diagnosedReason String
+
+  /// Whether the Left Brain policy engine allowed this action
+  policyPassed Boolean
+
+  /// What action was dispatched to BullMQ (null if blocked)
+  actionTaken String?
+
+  /// Cost of this action: LLM tokens + messaging + gateway retry fees (in INR)
+  costIncurred Float @default(0.0)
+
+  /// Amount recovered as a direct result of this action (in INR)
+  rupeesRecovered Float @default(0.0)
+
+  /// Full JSON explainability trail: policy verdict + context snapshot
+  rawReasoning String
+
+  @@index([eventId])
+  @@index([timestamp])
+  @@index([policyPassed])
+}
+
+/// Tracks Promise-to-Pay commitments extracted from Hinglish / conversational interactions.
+/// Drives the PTP state machine: PENDING → HONORED | BREACHED
+model PromiseToPay {
+  id      String       @id @default(uuid())
+  eventId String
+  event   RevenueEvent @relation(fields: [eventId], references: [id])
+
+  /// ISO timestamp the customer committed to paying by
+  promisedDate DateTime
+
+  /// Amount the customer promised to pay (may differ from full amountAtRisk)
+  agreedAmount Float
+
+  status PTPStatus @default(PENDING)
+
+  /// The verbatim quote from which the commitment was extracted
+  extractedQuote String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([status])
+  @@index([promisedDate])
+}
