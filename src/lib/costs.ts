@@ -42,3 +42,4 @@ export function sumCosts(...keys: CostKey[]): number {
 export function roundCost(n: number): number {
   return Math.round(n * 100) / 100;
 }
+

@@ -146,3 +146,4 @@ export async function sendEmail(
   const msgId = res.headers.get('x-message-id') ?? `email_${Date.now().toString(36)}`;
   return { messageId: msgId, costINR: COSTS_INR.EMAIL, simulated: false };
 }
+

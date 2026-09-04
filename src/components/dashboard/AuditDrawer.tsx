@@ -370,3 +370,4 @@ export default function AuditDrawer({ eventId, onClose }: AuditDrawerProps) {
     </div>
   );
 }
+

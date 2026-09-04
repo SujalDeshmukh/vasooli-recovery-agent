@@ -125,3 +125,4 @@ export async function GET(): Promise<NextResponse<MetricsResponse | { error: str
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+

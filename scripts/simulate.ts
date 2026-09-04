@@ -506,3 +506,4 @@ function pct(n: number, total: number) {
 }
 
 main().catch(err => { console.error('Fatal:', err); process.exit(1); });
+

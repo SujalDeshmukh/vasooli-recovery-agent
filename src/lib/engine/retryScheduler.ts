@@ -122,3 +122,4 @@ export function countBusinessDaysBetween(from: Date, to: Date): number {
   }
   return count;
 }
+

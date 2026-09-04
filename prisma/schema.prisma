@@ -139,3 +139,4 @@ model PromiseToPay {
   @@index([status])
   @@index([promisedDate])
 }
+

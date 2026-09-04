@@ -64,3 +64,4 @@ export default function VerdictBadge({ policyPassed, actionTaken, escalate }: Ve
     </span>
   );
 }
+

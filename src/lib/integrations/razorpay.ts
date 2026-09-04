@@ -152,3 +152,4 @@ export async function cancelSubscription(subscriptionId: string): Promise<void> 
   }
   await rzpFetch(`/subscriptions/${subscriptionId}/cancel`, { method: 'POST' });
 }
+
